@@ -20,24 +20,15 @@ Settings.llm = llm
 Settings.embed_model = embed_model
 
 # Prompt Templates
+def load_template(file_name):
+    with open(file_name, 'r') as file:
+        return file.read()
 
-router_prompt = PromptTemplate("""
-    Some choices are given below. It is provided in a numbered list (1 to {num_choices}), where each item in the list corresponds to a
-    summary. If you have any doubt, select the student guide.\n---------------------\n{context_list}\n---------------------\n
-    
-    Use this information to help meake a determination:
-    - Course descriptions: These questions are be about course content, course objectives, course descriptions, and topics. Course
-      descriptions do not have any information about faculty, instructors, field education, or graduation requirements. \n
-    
-    - Faculty profiles: These questions will be about faculty members, their research, their teaching interests. Any question about 
-    person will be answered here. Any question about "who" studies a given topic will be answered by the faculty profiles \n
-    
-    -Student guide: Any questions that are about credits, internships, enrollment, graduation, policies, and other student requirements fit this category.
-    
-    
-    Using only the information provide, return the top choices (no more than {max_outputs}, but only select what is needed) 
-    that are most relevant to the question: '{query_str}'\n
-""")
+# Load templates from files
+router_prompt = load_template('Prompts/router_prompt.txt')
+text_qa_template_student_str = PromptTemplate(load_template('Prompts/text_qa_template_student.txt'))
+text_qa_template_prof_str = PromptTemplate(load_template('Prompts/text_qa_template_prof.txt'))
+text_qa_template_courses_str = PromptTemplate(load_template('Prompts/text_qa_template_courses.txt'))
 
 
 choices = [
@@ -45,51 +36,6 @@ choices = [
     "Questions relate to the faculty profiles",
     "Question relates to the student guide"
 ]
-
-text_qa_template_student_str = (
-    '''Context information about the student guide or handbook is
-        \n---------------------\n{context_str}\n---------------------\n
-    
-    Using the context information, answer the question: {query_str}
-    
-    Provide a detailed response in a friendly voice. Do not say anything irrelevant. Please note the following:
-    - A field placement may be called an internship, field, practicum or placement.\n
-    
-    If you cannot answer the question based on the context provided, tell the user that you don't have access to that specific information. \n
-    When responding, refer to the "context" as your "available information."
-    For unanswered questions, direct them to the technical advising team at ssw.technicaladvising@umich.edu. 
-  
-    \n
-    \n
-
-  '''
-)
-
-text_qa_template_prof_str = (
-    '''Context information about faculty members is below.
-    \n---------------------\n{context_str}\n---------------------\n
-    
-    Using the context information, answer the question: {query_str}
-    
-    Follow these rules when responding:
-    - Provide a detailed response in a friendly voice. 
-    - Interpret the question broadly, trying to find faculty that are relevant. 
-    - Summarize only the faculty who are directly relevant. Do not provide any irrelevant information.
-    - If you cannot answer the question based on the context provided, tell the user that you don't have access to that specific information. \n
-    - When responding, refer to the "context" as your "available information."
-    '''
-)
-
-text_qa_template_courses_str = (
-    
-)
-
-
-text_qa_template_student = PromptTemplate(text_qa_template_student_str)
-text_qa_template_prof = PromptTemplate(text_qa_template_prof_str)
-text_qa_template_courses = PromptTemplate(text_qa_template_courses_str)
-
-
 
 def get_choice_str(choices):
     choices_str = "\n\n".join(

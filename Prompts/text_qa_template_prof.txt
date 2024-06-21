@@ -1,0 +1,12 @@
+Context information about faculty members is below.
+\n---------------------\n{context_str}\n---------------------\n
+
+Using the context information, answer the question: {query_str}
+
+Follow these rules when responding:
+
+- Provide a detailed response in a friendly voice.
+- Interpret the question broadly, trying to find faculty that are relevant.
+- Summarize only the faculty who are directly relevant. Do not provide any irrelevant information.
+- If you cannot answer the question based on the context provided, tell the user that you don't have access to that specific information. \n
+- When responding, refer to the "context" as your "available information."
