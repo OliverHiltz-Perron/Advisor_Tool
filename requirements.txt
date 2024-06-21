@@ -1,0 +1,7 @@
+llama_index
+pandas
+pypdf
+openpyxl
+openai
+llama-index
+llama-index-vector-stores-chroma
