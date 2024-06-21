@@ -1,16 +1,12 @@
 import os
 import pandas as pd
 import openai
-#import nest_asyncio  # noqa: E402
-#nest_asyncio.apply()
 from llama_index.vector_stores.chroma import ChromaVectorStore
 import chromadb
-#from IPython.display import Markdown, display
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext, Settings, load_index_from_storage, Document, PromptTemplate
 from llama_index.llms.openai import OpenAI
 from llama_index.embeddings.openai import OpenAIEmbedding
 import json
-#import textwrap
 import gradio as gr
 
 
@@ -85,17 +81,7 @@ text_qa_template_prof_str = (
 )
 
 text_qa_template_courses_str = (
-    '''Context information about courses are below: 
     
-    \n---------------------\n{context_str}\n---------------------\n
-    
-    Using the context information, answer the question: {query_str}
-    
-    Provide a detailed response in a friendly voice. If there are many courses to summarize, provide your 
-    response in bulleted form. Do not guess on any information. If you cannot answer the question based on the context provided,
-    tell the user that you don't have access to that specific information. \n
-    When responding, refer to the "context" as your "available information."
-    '''
 )
 
 
