@@ -9,8 +9,8 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 import json
 import gradio as gr
 
-
-api_key = os.getenv("OPENAI_API_KEY")
+#sk-proj-z6eBnyDJ2EFcsVjwwJ5wT3BlbkFJv4qsfqjryGcp4zP1oTsB
+api_key = os.getenvS("OPENAI_API_KEY")
 client = OpenAI(api_key=api_key)
 
 embed_model = OpenAIEmbedding(model="text-embedding-3-large")
@@ -26,9 +26,9 @@ def load_template(file_name):
 
 # Load templates from files
 router_prompt = load_template('Prompts/router_prompt.txt')
-text_qa_template_student_str = PromptTemplate(load_template('Prompts/text_qa_template_student.txt'))
-text_qa_template_prof_str = PromptTemplate(load_template('Prompts/text_qa_template_prof.txt'))
-text_qa_template_courses_str = PromptTemplate(load_template('Prompts/text_qa_template_courses.txt'))
+text_qa_template_student = PromptTemplate(load_template('Prompts/text_qa_template_student.txt'))
+text_qa_template_prof = PromptTemplate(load_template('Prompts/text_qa_template_prof.txt'))
+text_qa_template_courses = PromptTemplate(load_template('Prompts/text_qa_template_courses.txt'))
 
 
 choices = [
