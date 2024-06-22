@@ -1,0 +1,65 @@
+[33mcommit f0047504dcaeec16f853a189b084088ab5826010[m[33m ([m[1;36mHEAD -> [m[1;32mOliverTesting[m[33m)[m
+Author: Oliver Hiltz-Perron <olivert831@gmail.com>
+Date:   Fri Jun 21 20:13:39 2024 -0400
+
+    set up the .env file
+
+[33mcommit 93693e73f6db2b85878e4fba7a7322b8c804f781[m
+Author: Oliver Hiltz-Perron <olivert831@gmail.com>
+Date:   Fri Jun 21 20:10:23 2024 -0400
+
+    Create .gitignore
+
+[33mcommit 7df3812a0d5190ae7ca04850064746169222c4d9[m
+Author: Oliver Hiltz-Perron <olivert831@gmail.com>
+Date:   Fri Jun 21 20:07:47 2024 -0400
+
+    Update app.py
+
+[33mcommit 9db548260557f192aa2b9374bb737e6197a10910[m
+Author: Oliver Hiltz-Perron <olivert831@gmail.com>
+Date:   Fri Jun 21 19:55:04 2024 -0400
+
+    Update app.py
+
+[33mcommit 095feea67f66848f95bcc4b9226b1bd8f747672f[m
+Author: Oliver Hiltz-Perron <olivert831@gmail.com>
+Date:   Fri Jun 21 19:30:47 2024 -0400
+
+    testing code
+
+[33mcommit f9decef45b6e940feea7fea6217da1a4a4392e06[m
+Author: Oliver Hiltz-Perron <olivert831@gmail.com>
+Date:   Fri Jun 21 19:13:31 2024 -0400
+
+    Added Prompts to their own file
+
+[33mcommit 841b7d85d204822253ed17a74bbe1cf090088965[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/OliverTesting[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Oliver Hiltz-Perron <olivert831@gmail.com>
+Date:   Fri Jun 21 17:53:58 2024 -0400
+
+    Cleaning files
+
+[33mcommit c9efbf4e62ff6b110b5e7f23cecbb8f9c758116a[m
+Author: Oliver Hiltz-Perron <88346723+Soul-Jacker@users.noreply.github.com>
+Date:   Fri Jun 21 17:38:46 2024 -0400
+
+    Add files via upload
+
+[33mcommit cf5a8f9402409cb44b052307e73eb93e45ec70f7[m
+Author: Oliver Hiltz-Perron <88346723+Soul-Jacker@users.noreply.github.com>
+Date:   Fri Jun 21 17:35:47 2024 -0400
+
+    Rename README(2).md to README.md
+
+[33mcommit 6872bb87dcc183e0f0fa82e1dd285580685dcece[m
+Author: Oliver Hiltz-Perron <88346723+Soul-Jacker@users.noreply.github.com>
+Date:   Fri Jun 21 17:35:13 2024 -0400
+
+    Add files via upload
+
+[33mcommit e589046ced08be9d3bb6e2daa81a5030ceb873fb[m
+Author: Oliver Hiltz-Perron <88346723+Soul-Jacker@users.noreply.github.com>
+Date:   Fri Jun 21 17:32:35 2024 -0400
+
+    Initial commit
