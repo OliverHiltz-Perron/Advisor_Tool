@@ -9,9 +9,8 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 import json
 import gradio as gr
 
-#api_key = os.getenv("sk-proj-z6eBnyDJ2EFcsVjwwJ5wT3BlbkFJv4qsfqjryGcp4zP1oTsB")
-client = OpenAI("sk-proj-z6eBnyDJ2EFcsVjwwJ5wT3BlbkFJv4qsfqjryGcp4zP1oTsB")
-
+api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key)
 embed_model = OpenAIEmbedding(model="text-embedding-3-large")
 llm = OpenAI(model="gpt-3.5-turbo")
 
