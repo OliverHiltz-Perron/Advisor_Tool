@@ -26,11 +26,13 @@ def load_template(file_name):
 
 # Load templates from files
 router_prompt = load_template('Prompts/router_prompt.txt')
-text_qa_template_student = PromptTemplate(load_template('Prompts/text_qa_template_student.txt'))
-text_qa_template_prof = PromptTemplate(load_template('Prompts/text_qa_template_prof.txt'))
-text_qa_template_courses = PromptTemplate(load_template('Prompts/text_qa_template_courses.txt'))
+templates = {
+    'student': PromptTemplate(load_template('Prompts/text_qa_template_student.txt')),
+    'prof': PromptTemplate(load_template('Prompts/text_qa_template_prof.txt')),
+    'courses': PromptTemplate(load_template('Prompts/text_qa_template_courses.txt'))
+}
 
-
+#Models the ai can choose from
 choices = [
     "Question relates to the course descriptions",
     "Questions relate to the faculty profiles",
@@ -38,41 +40,21 @@ choices = [
 ]
 
 def get_choice_str(choices):
-    choices_str = "\n\n".join(
-        [f"{idx+1}. {c}" for idx, c in enumerate(choices)]
-    )
-    return choices_str
+    return "\n\n".join([f"{idx+1}. {c}" for idx, c in enumerate(choices)])
 
 
 choices_str = get_choice_str(choices)
 
+#sets up the models
+def initialize_vector_store(db_path, collection_name):
+    db_client = chromadb.PersistentClient(path=db_path)
+    chroma_collection = db_client.get_or_create_collection(collection_name)
+    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
+    return VectorStoreIndex.from_vector_store(vector_store, embed_model=embed_model)
 
-# load from disk
-db2 = chromadb.PersistentClient(path="./chroma_db_classes")
-chroma_collection = db2.get_or_create_collection("AdvisorTool_classes")
-vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-index_classes = VectorStoreIndex.from_vector_store(
-    vector_store,
-    embed_model=embed_model,
-)
-
-# load from disk
-db2 = chromadb.PersistentClient(path="./chroma_db")
-chroma_collection = db2.get_or_create_collection("AdvisorTool")
-vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-index = VectorStoreIndex.from_vector_store(
-    vector_store,
-    embed_model=embed_model,
-)
-# load from disk
-db2p = chromadb.PersistentClient(path="./chroma_db_professor")
-chroma_collection = db2p.get_or_create_collection("AdvisorTool_Professor")
-vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-index_pro = VectorStoreIndex.from_vector_store(
-    vector_store,
-    embed_model=embed_model,
-)
-
+index_classes = initialize_vector_store("./chroma_db_classes", "AdvisorTool_classes")
+index = initialize_vector_store("./chroma_db", "AdvisorTool")
+index_prof = initialize_vector_store("./chroma_db_professor", "AdvisorTool_Professor")
 
 ####################################################
 #  User-defined functions for query and response   #
@@ -95,23 +77,9 @@ def get_formatted_prompt(query_str):
 
 
 # Query index and return results
-def query_index_student(query):
+def query_index(query, index, template):
     response = index.as_query_engine(
-        text_qa_template=text_qa_template_student,
-        similarity_top_k=8,
-    ).query(query)
-    return response
-
-def query_index_prof(query):
-    response = index_pro.as_query_engine(
-        text_qa_template=text_qa_template_prof,
-        similarity_top_k=8,
-    ).query(query)
-    return response
-
-def query_index_classes(query):
-    response = index_classes.as_query_engine(
-        text_qa_template=text_qa_template_courses,
+        text_qa_template=template,
         similarity_top_k=8,
     ).query(query)
     return response
@@ -128,33 +96,28 @@ def process_response(response_data):
                 context += f"{key}: {value}\n"
             context += "Text: " + node.node.text + "\n"
         return response, context
-
 import re
 
 def extract_choice_index(response):
     match = re.search(r'\d+', response)
-    if match:
-        return int(match.group())
-    else:
-        return None
+    return int(match.group()) if match else None
 
 def perform_query(query):
     prompt_response = get_formatted_prompt(query)
     choice_index = extract_choice_index(prompt_response)
 
     if choice_index == 1:
-        response_data = query_index_student(query)
+        response_data = query_index(query, index, templates['student'])
     elif choice_index == 2:
-        response_data = query_index_prof(query)
+        response_data = query_index(query, index_prof, templates['prof'])
     elif choice_index == 3:
-        response_data = query_index_classes(query)
+        response_data = query_index(query, index_classes, templates['courses'])
     else:
         response_data = "I'm sorry, I couldn't determine the context of your question. Please try again."
 
-    # Modify the process_response function to return the response as a string
-    response_str = process_response(response_data)
+    response_str, context = process_response(response_data)
+    return response_str, context
 
-    return response_str
 
 def answer_question(question):
     response, context = perform_query(question)
@@ -169,21 +132,8 @@ response_global = ""
 context_global = ""
 
 def get_response(query):
-    global response_global, context_global
-    prompt_response = get_formatted_prompt(query)
-    choice_index = extract_choice_index(prompt_response)
-
-    if choice_index == 1:
-        response_data = query_index_student(query)
-    elif choice_index == 2:
-        response_data = query_index_prof(query)
-    elif choice_index == 3:
-        response_data = query_index_classes(query)
-    else:
-        response_data = "I'm sorry, I couldn't determine the context of your question. Please try again."
-
-    response_global, context_global = process_response(response_data)
-    return response_global, context_global
+    response, context = perform_query(query)
+    return response, context
 
 def show_response(query):
     response, _ = get_response(query)
