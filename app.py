@@ -61,25 +61,36 @@ index_prof = initialize_vector_store("./chroma_db_professor", "AdvisorTool_Profe
 ####################################################
 
 
-def get_formatted_prompt(query_str):
+def get_formatted_prompt(query_str, chat_history_str):
     fmt_prompt = router_prompt.format(
         num_choices=3,
         max_outputs=2,
         context_list=choices_str,
         query_str=query_str,
+        chat_history=chat_history_str  # Include chat history in the prompt
     )
-
     response = llm.complete(fmt_prompt)
     return response.text
 
-
+def format_chat_history(chat_history):
+    history_str = ""
+    for idx, (query, response, context) in enumerate(chat_history):
+        history_str += f"**Query {idx + 1}:** {query}\n\n"
+        history_str += f"**Response {idx + 1}:** {response}\n\n"
+        history_str += f"**Context {idx + 1}:** {context}\n\n"
+    return history_str
 
 
 
 # Query index and return results
-def query_index(query, index, template):
+def query_index(query, index, template, chat_history_str):
+    full_query = template.format(
+        query_str=query,
+        chat_history=chat_history_str,
+        context_str="{context_str}"  # Placeholder to be filled by the query engine
+    )
     response = index.as_query_engine(
-        text_qa_template=template,
+        text_qa_template=PromptTemplate(full_query),
         similarity_top_k=8,
     ).query(query)
     return response
@@ -103,15 +114,16 @@ def extract_choice_index(response):
     return int(match.group()) if match else None
 
 def perform_query(query):
-    prompt_response = get_formatted_prompt(query)
+    chat_history_str = format_chat_history(chat_history)
+    prompt_response = get_formatted_prompt(query, chat_history_str)
     choice_index = extract_choice_index(prompt_response)
 
     if choice_index == 1:
-        response_data = query_index(query, index, templates['student'])
+        response_data = query_index(query, index, templates['student'], chat_history_str)
     elif choice_index == 2:
-        response_data = query_index(query, index_prof, templates['prof'])
+        response_data = query_index(query, index_prof, templates['prof'], chat_history_str)
     elif choice_index == 3:
-        response_data = query_index(query, index_classes, templates['courses'])
+        response_data = query_index(query, index_classes, templates['courses'], chat_history_str)
     else:
         response_data = "I'm sorry, I couldn't determine the context of your question. Please try again."
 
@@ -125,15 +137,25 @@ def answer_question(question):
     context_md = f"**Context:**\n\n{context}"
     return gr.Markdown(response_md), gr.Markdown(context_md)
 
+#######################
+#  Gradio front end   #
+#######################
+
 import gradio as gr
 
 # Global variables to store response and context
 response_global = ""
 context_global = ""
 
+# Initialize chat history
+chat_history = []
+
+# Function to get response and update chat history
 def get_response(query):
     response, context = perform_query(query)
+    chat_history.append((query, response, context))
     return response, context
+
 
 def show_response(query):
     response, _ = get_response(query)
@@ -142,6 +164,14 @@ def show_response(query):
 def show_context(query):
     _, context = get_response(query)
     return context
+
+def display_chat_history():
+    history_md = ""
+    for idx, (query, response, context) in enumerate(chat_history):
+        history_md += f"**Query {idx + 1}:** {query}\n\n"
+        history_md += f"**Response {idx + 1}:** {response}\n\n"
+        history_md += f"**Context {idx + 1}:** {context}\n\n"
+    return gr.Markdown(history_md)
 
 with gr.Blocks() as demo:
     gr.Markdown("# Advisor Support App\n\nThis app draws on information from course descriptions, faculty profiles, and the student handbook. Questions that are outside of this scope cannot be answered by the app.")
