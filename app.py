@@ -9,22 +9,28 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 import json
 import gradio as gr
 from dotenv import load_dotenv
+
+# Load environment variables from a .env file
 load_dotenv()
 
+# Retrieve OpenAI API key from environment variables
 api_key = os.getenv("OPENAI_API_KEY")
+
+# Initialize OpenAI client and models
 client = OpenAI(api_key=api_key)
 embed_model = OpenAIEmbedding(model="text-embedding-3-large")
 llm = OpenAI(model="gpt-3.5-turbo")
 
+# Set global settings for LLM and embedding model
 Settings.llm = llm
 Settings.embed_model = embed_model
 
-# Prompt Templates
+# Function to load a template from a file
 def load_template(file_name):
     with open(file_name, 'r') as file:
         return file.read()
 
-# Load templates from files
+# Load prompt templates from files
 router_prompt = load_template('Prompts/router_prompt.txt')
 templates = {
     'student': PromptTemplate(load_template('Prompts/text_qa_template_student.txt')),
@@ -32,26 +38,28 @@ templates = {
     'courses': PromptTemplate(load_template('Prompts/text_qa_template_courses.txt'))
 }
 
-#Models the ai can choose from
+# Define choices for the AI to choose from
 choices = [
     "Question relates to the course descriptions",
     "Questions relate to the faculty profiles",
     "Question relates to the student guide"
 ]
 
+# Function to format choices as a string
 def get_choice_str(choices):
     return "\n\n".join([f"{idx+1}. {c}" for idx, c in enumerate(choices)])
 
-
+# Format choices string
 choices_str = get_choice_str(choices)
 
-#sets up the models
+# Function to initialize a vector store
 def initialize_vector_store(db_path, collection_name):
     db_client = chromadb.PersistentClient(path=db_path)
     chroma_collection = db_client.get_or_create_collection(collection_name)
     vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
     return VectorStoreIndex.from_vector_store(vector_store, embed_model=embed_model)
 
+# Initialize vector stores for different collections
 index_classes = initialize_vector_store("./chroma_db_classes", "AdvisorTool_classes")
 index = initialize_vector_store("./chroma_db", "AdvisorTool")
 index_prof = initialize_vector_store("./chroma_db_professor", "AdvisorTool_Professor")
@@ -60,7 +68,7 @@ index_prof = initialize_vector_store("./chroma_db_professor", "AdvisorTool_Profe
 #  User-defined functions for query and response   #
 ####################################################
 
-
+# Function to format the prompt with the query and chat history
 def get_formatted_prompt(query_str, chat_history_str):
     fmt_prompt = router_prompt.format(
         num_choices=3,
@@ -72,6 +80,7 @@ def get_formatted_prompt(query_str, chat_history_str):
     response = llm.complete(fmt_prompt)
     return response.text
 
+# Function to format chat history into a string
 def format_chat_history(chat_history):
     history_str = ""
     for idx, (query, response, context) in enumerate(chat_history):
@@ -79,18 +88,23 @@ def format_chat_history(chat_history):
         history_str += f"**Response {idx + 1}:** {response}\n\n"
     return history_str
 
-
-
-# Query index and return results
+# Function to query the index and return results
 def query_index(query, index, template, chat_history_str):
     full_query = template  # The template already includes the chat history and query string
-    response = index.as_query_engine(
-        text_qa_template=PromptTemplate(full_query),
-        similarity_top_k=1,
-    ).query(query)
-    return response
+    if index is index_prof:
+        response = index.as_query_engine(
+            text_qa_template=PromptTemplate(full_query),
+            similarity_top_k=5,
+        ).query(query)
+        return response
+    else:
+        response = index.as_query_engine(
+            text_qa_template=PromptTemplate(full_query),
+            similarity_top_k=4,
+        ).query(query)
+        return response
 
-
+# Function to process the response and format it
 def process_response(response_data):
     if isinstance(response_data, str):
         return "Response: " + response_data
@@ -103,12 +117,15 @@ def process_response(response_data):
                 context += f"{key}: {value}\n"
             context += "Text: " + node.node.text + "\n"
         return response, context
+
 import re
 
+# Function to extract choice index from the response
 def extract_choice_index(response):
     match = re.search(r'\d+', response)
     return int(match.group()) if match else None
 
+# Main function to perform a query and get the response
 def perform_query(query):
     chat_history_str = format_chat_history(chat_history)
     prompt_response = get_formatted_prompt(query, chat_history_str)
@@ -118,21 +135,21 @@ def perform_query(query):
         template = templates['student'].template.format(
             query_str=query,
             chat_history=chat_history_str,
-            context_str="{context_str}"  # Placeholder to be filled by the query engine
+            context_str="{context_str}"
         )
         response_data = query_index(query, index, template, chat_history_str)
     elif choice_index == 2:
         template = templates['prof'].template.format(
             query_str=query,
             chat_history=chat_history_str,
-            context_str="{context_str}"  # Placeholder to be filled by the query engine
+            context_str="{context_str}"
         )
         response_data = query_index(query, index_prof, template, chat_history_str)
     elif choice_index == 3:
         template = templates['courses'].template.format(
             query_str=query,
             chat_history=chat_history_str,
-            context_str="{context_str}"  # Placeholder to be filled by the query engine
+            context_str="{context_str}"
         )
         response_data = query_index(query, index_classes, template, chat_history_str)
     else:
@@ -141,7 +158,7 @@ def perform_query(query):
     response_str, context = process_response(response_data)
     return response_str, context
 
-
+# Function to answer a question and format the response
 def answer_question(question):
     response, context = perform_query(question)
     response_md = f"**Response:**\n\n{response}"
@@ -167,15 +184,17 @@ def get_response(query):
     chat_history.append((query, response, context))
     return response, context
 
-
+# Function to show response
 def show_response(query):
     response, _ = get_response(query)
     return response
 
+# Function to show context
 def show_context(query):
     _, context = get_response(query)
     return context
 
+# Function to display chat history
 def display_chat_history():
     history_md = ""
     for idx, (query, response, context) in enumerate(chat_history):
@@ -184,6 +203,7 @@ def display_chat_history():
         history_md += f"**Context {idx + 1}:** {context}\n\n"
     return gr.Markdown(history_md)
 
+# Define the Gradio interface
 with gr.Blocks() as demo:
     gr.Markdown("# Advisor Support App\n\nThis app draws on information from course descriptions, faculty profiles, and the student handbook. Questions that are outside of this scope cannot be answered by the app.")
     
@@ -202,4 +222,5 @@ with gr.Blocks() as demo:
             query_button.click(fn=show_context, inputs=query_input, outputs=context_output)
             clear_button.click(lambda: "", None, context_output)
 
+# Launch the Gradio app
 demo.launch(share=True)
