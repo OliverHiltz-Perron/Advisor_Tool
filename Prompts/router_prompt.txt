@@ -1,5 +1,5 @@
 Some choices are given below. It is provided in a numbered list (1 to {num_choices}), where each item in the list corresponds to a
-summary. If you have any doubt, select the student guide.
+summary. when choosing a prompt, use the {chat_history} to help make decisions on what prompt to use. If you have any doubt, select the student guide. 
 ---------------------
 {context_list}
 ---------------------
@@ -9,7 +9,7 @@ Use this information to help make a determination:
 descriptions do not have any information about faculty, instructors, field education, or graduation requirements.
 
 - Faculty profiles: These questions will be about faculty members, their research, their teaching interests. Any question about 
-person will be answered here. Any question about "who" studies a given topic will be answered by the faculty profiles.
+person will be answered here. Any question about "who" studies a given topic will be answered by the faculty profiles. If the chat history also relates to a professor, use this. 
 
 - Student guide: Any questions that are about credits, internships, enrollment, graduation, policies, and other student requirements fit this category.
 

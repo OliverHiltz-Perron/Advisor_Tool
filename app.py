@@ -77,23 +77,19 @@ def format_chat_history(chat_history):
     for idx, (query, response, context) in enumerate(chat_history):
         history_str += f"**Query {idx + 1}:** {query}\n\n"
         history_str += f"**Response {idx + 1}:** {response}\n\n"
-        history_str += f"**Context {idx + 1}:** {context}\n\n"
     return history_str
 
 
 
 # Query index and return results
 def query_index(query, index, template, chat_history_str):
-    full_query = template.format(
-        query_str=query,
-        chat_history=chat_history_str,
-        context_str="{context_str}"  # Placeholder to be filled by the query engine
-    )
+    full_query = template  # The template already includes the chat history and query string
     response = index.as_query_engine(
         text_qa_template=PromptTemplate(full_query),
-        similarity_top_k=8,
+        similarity_top_k=1,
     ).query(query)
     return response
+
 
 def process_response(response_data):
     if isinstance(response_data, str):
@@ -117,13 +113,28 @@ def perform_query(query):
     chat_history_str = format_chat_history(chat_history)
     prompt_response = get_formatted_prompt(query, chat_history_str)
     choice_index = extract_choice_index(prompt_response)
-
+    
     if choice_index == 1:
-        response_data = query_index(query, index, templates['student'], chat_history_str)
+        template = templates['student'].template.format(
+            query_str=query,
+            chat_history=chat_history_str,
+            context_str="{context_str}"  # Placeholder to be filled by the query engine
+        )
+        response_data = query_index(query, index, template, chat_history_str)
     elif choice_index == 2:
-        response_data = query_index(query, index_prof, templates['prof'], chat_history_str)
+        template = templates['prof'].template.format(
+            query_str=query,
+            chat_history=chat_history_str,
+            context_str="{context_str}"  # Placeholder to be filled by the query engine
+        )
+        response_data = query_index(query, index_prof, template, chat_history_str)
     elif choice_index == 3:
-        response_data = query_index(query, index_classes, templates['courses'], chat_history_str)
+        template = templates['courses'].template.format(
+            query_str=query,
+            chat_history=chat_history_str,
+            context_str="{context_str}"  # Placeholder to be filled by the query engine
+        )
+        response_data = query_index(query, index_classes, template, chat_history_str)
     else:
         response_data = "I'm sorry, I couldn't determine the context of your question. Please try again."
 

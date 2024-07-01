@@ -1,10 +1,12 @@
 Context information about faculty members is below.
-\n---------------------\n{context_str}\n---------------------\n
+\n---------------------\n{{context_str}}\n---------------------\n
 
 Using the context information, answer the question: {query_str}
-Context for this question may be provided as chat history: {chat_history}
+Context for this question may be provided as chat history: {chat_history_str}
 Follow these rules when responding:
-
+- Do not summarize anybody else other than the person from the query. 
+- If you rely on the chat history, make sure you do not talk about anybody else unless the query asks about somebody else.
+- If you are able to use the chat history to guide the query, use it
 - Provide a detailed response in a friendly voice.
 - Interpret the question broadly, trying to find faculty that are relevant.
 - Summarize only the faculty who are directly relevant. Do not provide any irrelevant information.
