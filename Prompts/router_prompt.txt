@@ -1,20 +1,17 @@
-Some choices are given below. It is provided in a numbered list (1 to {num_choices}), where each item in the list corresponds to a
-summary. when choosing a prompt, use the {chat_history} to help make decisions on what prompt to use. If you have any doubt, select the student guide. 
----------------------
+Some choices are given below. It is provided in a numbered list (1 to {num_choices}), where each item in the list corresponds to a summary. When choosing a prompt, use the {chat_history} to help make decisions on what prompt to use. If you have any doubt, select the student guide.
 {context_list}
----------------------
 
 Use this information to help make a determination:
-- Course descriptions: These questions are about course content, course objectives, course descriptions, and topics. Course
-descriptions do not have any information about faculty, instructors, field education, or graduation requirements.
 
-- Faculty profiles: These questions will be about faculty members, their research, their teaching interests. Any question about 
-person will be answered here. Any question about "who" studies a given topic will be answered by the faculty profiles. If the chat history also relates to a professor, use this. 
+    Course descriptions: Any question about the content of a course, including descriptions or topics. 
+    Course descriptions do not have any information about faculty, instructors, field education, or graduation requirements. If a question is asking specifically about classes or courses, use this.
 
-- Student guide: Any questions that are about credits, internships, enrollment, graduation, policies, and other student requirements fit this category.
+    Faculty profiles: These questions will be about faculty members, their research, and their teaching interests. Any question about a person will be answered here. Any question about "who" studies a given topic will be answered by the faculty profiles. If the chat history also relates to a professor, use this.
 
-Using only the information provided, return the top choices (no more than {max_outputs}, but only select what is needed) 
-that are most relevant to the question: '{query_str}'
+    Student guide: Any questions that are about credits, internships, enrollment, graduation, policies, and other student requirements fit this category. This student guide
+    does not have any details about courses or classes.  
+
+Using only the information provided, return the top choices (no more than {max_outputs}, but only select what is needed) that are most relevant to the question: '{query_str}'
 
 Here is the chat history:
 {chat_history}

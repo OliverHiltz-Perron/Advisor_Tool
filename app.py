@@ -6,7 +6,6 @@ import chromadb
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext, Settings, load_index_from_storage, Document, PromptTemplate
 from llama_index.llms.openai import OpenAI
 from llama_index.embeddings.openai import OpenAIEmbedding
-import json
 import gradio as gr
 from dotenv import load_dotenv
 
