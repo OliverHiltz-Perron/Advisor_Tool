@@ -7,12 +7,12 @@ from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageCon
 from llama_index.llms.openai import OpenAI
 from llama_index.embeddings.openai import OpenAIEmbedding
 import json
+import re
 import gradio as gr
 from dotenv import load_dotenv
 load_dotenv()
 
-api_key = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key)
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 embed_model = OpenAIEmbedding(model="text-embedding-3-large")
 llm = OpenAI(model="gpt-3.5-turbo")
 
@@ -30,26 +30,10 @@ text_qa_template_student = PromptTemplate(load_template('Prompts/text_qa_templat
 text_qa_template_prof = PromptTemplate(load_template('Prompts/text_qa_template_prof.txt'))
 text_qa_template_courses = PromptTemplate(load_template('Prompts/text_qa_template_courses.txt'))
 
+choices_str = load_template('Prompts/choices.txt')
 
-choices = [
-    "Question relates to the course descriptions",
-    "Questions relate to the faculty profiles",
-    "Question relates to the student guide"
-]
-
-def get_choice_str(choices):
-    choices_str = "\n\n".join(
-        [f"{idx+1}. {c}" for idx, c in enumerate(choices)]
-    )
-    return choices_str
-
-
-choices_str = get_choice_str(choices)
-
-
-# load from disk
 db2 = chromadb.PersistentClient(path="./chroma_db_classes")
-chroma_collection = db2.get_or_create_collection("AdvisorTool_classes")
+chroma_collection = db2.get_or_create_collection("AdvisorTool_Courses")
 vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
 index_classes = VectorStoreIndex.from_vector_store(
     vector_store,
@@ -86,13 +70,8 @@ def get_formatted_prompt(query_str):
         context_list=choices_str,
         query_str=query_str,
     )
-
     response = llm.complete(fmt_prompt)
     return response.text
-
-
-
-
 
 # Query index and return results
 def query_index_student(query):
@@ -129,7 +108,6 @@ def process_response(response_data):
             context += "Text: " + node.node.text + "\n"
         return response, context
 
-import re
 
 def extract_choice_index(response):
     match = re.search(r'\d+', response)
@@ -150,7 +128,6 @@ def perform_query(query):
         response_data = query_index_classes(query)
     else:
         response_data = "I'm sorry, I couldn't determine the context of your question. Please try again."
-
     # Modify the process_response function to return the response as a string
     response_str = process_response(response_data)
 
@@ -169,7 +146,6 @@ response_global = ""
 context_global = ""
 
 def get_response(query):
-    global response_global, context_global
     prompt_response = get_formatted_prompt(query)
     choice_index = extract_choice_index(prompt_response)
 
@@ -182,8 +158,8 @@ def get_response(query):
     else:
         response_data = "I'm sorry, I couldn't determine the context of your question. Please try again."
 
-    response_global, context_global = process_response(response_data)
-    return response_global, context_global
+    response, context = process_response(response_data)
+    return response, context
 
 def show_response(query):
     response, _ = get_response(query)
@@ -193,22 +169,62 @@ def show_context(query):
     _, context = get_response(query)
     return context
 
-with gr.Blocks() as demo:
-    gr.Markdown("# Advisor Support App\n\nThis app draws on information from course descriptions, faculty profiles, and the student handbook. Questions that are outside of this scope cannot be answered by the app.")
+def create_demo():
+    with gr.Blocks(theme=gr.themes.Soft()) as demo:
+        gr.Markdown("""
+        # Academic Advisor Assistant
+        
+        Welcome to the Academic Advisor Assistant! This AI-powered tool can help answer questions about:
+        - Course information and descriptions
+        - Faculty profiles and research interests
+        - Student handbook policies and requirements
+        
+        Simply type your question below and click 'Submit' to get started.
+        """)
+        
+        with gr.Row():
+            with gr.Column(scale=4):
+                query_input = gr.Textbox(
+                    label="Your Question",
+                    placeholder="e.g., What courses are available for the Fall semester?",
+                    lines=3
+                )
+                
+                with gr.Row():
+                    submit_btn = gr.Button("Submit", variant="primary")
+                    clear_btn = gr.Button("Clear")
+                
+        with gr.Tabs():
+            with gr.TabItem("Answer"):
+                response_output = gr.Markdown(label="Response")
+            with gr.TabItem("Source Details"):
+                context_output = gr.Markdown(label="Context")
+        
+        # Set up event handlers
+        submit_btn.click(
+            fn=get_response,
+            inputs=query_input,
+            outputs=[response_output, context_output]
+        )
+        
+        clear_btn.click(
+            fn=lambda: ("", ""),
+            inputs=[],
+            outputs=[query_input, response_output, context_output]
+        )
+        
+        # Example questions
+        gr.Examples(
+            examples=[
+                "What courses are required for graduation?",
+                "Who teaches artificial intelligence?",
+                "What are the prerequisites for advanced courses?",
+            ],
+            inputs=query_input,
+        )
     
-    with gr.Tabs():
-        with gr.TabItem("Response"):
-            query_input = gr.Textbox(lines=2, placeholder="Enter your query here...")
-            response_output = gr.Markdown(label="Response")
-            query_button = gr.Button("Submit")
-            clear_button = gr.Button("Clear")
-            query_button.click(fn=show_response, inputs=query_input, outputs=response_output)
-            clear_button.click(lambda: "", None, query_input)
-            clear_button.click(lambda: "", None, response_output)
-        with gr.TabItem("Context"):
-            context_output = gr.Markdown(label="Context")
-            query_input_context = gr.Textbox(lines=2, placeholder="Enter your query here...", visible=False)
-            query_button.click(fn=show_context, inputs=query_input, outputs=context_output)
-            clear_button.click(lambda: "", None, context_output)
+    return demo
 
-demo.launch(share=True)
+if __name__ == "__main__":
+    demo = create_demo()
+    demo.launch(share=True)
